@@ -44,7 +44,7 @@ jobs:
 
       - name: Create tag
         run: |
-          git tag -a ${{steps.sem-version.outputs.next-version}} -m "Nueva versión ${{steps.version-resolver.outputs.value}}"
+          git tag -a ${{steps.sem-version.outputs.next-version}} -m "Nueva versión ${{steps.sem-version.outputs.next-version}}"
           git push origin --tags
 
       - name: Create pull request
