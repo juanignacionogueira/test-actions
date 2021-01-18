@@ -2,9 +2,10 @@ name: CI
 on:
   workflow_dispatch:
     inputs:
-      pre-release-version:
-        description: "Version para desarrollo. Ej: 1.2.0 => Se va a taggear con 0.1.2.0"
-        required: false
+        bump-type:
+          description: "Semantic versioning / Bump type [major, feature, bug, beta]"
+          required: true
+          default: 'beta'
 
 jobs:
   prepare-build:
@@ -22,12 +23,16 @@ jobs:
         run: echo "::set-output name=branch::${GITHUB_REF#refs/heads/}"
         id: currentBranch
 
-      - uses: haya14busa/action-cond@v1
-        id: version-resolver
+      - name: 'Get Previous tag'
+        id: previoustag
+        uses: WyriHaximus/github-action-get-previous-tag@v1
+
+      - name: Bump release version
+        id: sem-version
+        uses: christian-draeger/increment-semantic-version@1.0.2
         with:
-          cond: ${{ github.event.inputs.pre-release-version == '' }}
-          if_true: ""
-          if_false: "0.${{ github.event.inputs.pre-release-version }}"
+          current-version: ${{ steps.previoustag.outputs.tag }}
+          version-fragment: ${{ github.event.inputs.bump-type }}
 
       - name: Increase pom version
         run: |
