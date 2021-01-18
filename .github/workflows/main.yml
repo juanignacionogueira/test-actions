@@ -39,12 +39,12 @@ jobs:
           mvn versions:set -DgroupId=juanignacionogueira.tests -DartifactId=test-actions -DnewVersion=${{steps.sem-version.outputs.next-version}} -DprocessDependencies=false -DprocessPlugins=false  -DprocessParent=false
           git config --global user.name "Juan"
           git config --global user.email "juanignacionogueira@gmail.com"
-          git commit -a -m "Increase pom version ${{steps.version-resolver.outputs.value}}"
+          git commit -a -m "Increase pom version ${{steps.sem-version.outputs.next-version}}"
           git push origin ${{steps.currentBranch.outputs.branch}}
 
       - name: Create tag
         run: |
-          git tag -a ${{steps.version-resolver.outputs.value}} -m "Nueva versión ${{steps.version-resolver.outputs.value}}"
+          git tag -a ${{steps.sem-version.outputs.next-version}} -m "Nueva versión ${{steps.version-resolver.outputs.value}}"
           git push origin --tags
 
       - name: Create pull request
