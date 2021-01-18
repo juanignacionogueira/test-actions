@@ -1,36 +1,66 @@
-# This is a basic workflow to help you get started with Actions
-
 name: CI
-
-# Controls when the action will run. 
 on:
-  # Triggers the workflow on push or pull request events but only for the main branch
-  push:
-    branches: [ main ]
-  pull_request:
-    branches: [ main ]
-
-  # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
+    inputs:
+      pre-release-version:
+        description: "Version para desarrollo. Ej: 1.2.0 => Se va a taggear con 0.1.2.0"
+        required: false
 
-# A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
-  # This workflow contains a single job called "build"
-  build:
-    # The type of runner that the job will run on
+  prepare-build:
     runs-on: ubuntu-latest
-
-    # Steps represent a sequence of tasks that will be executed as part of the job
+    continue-on-error: false
+    outputs:
+      version: ${{steps.version-resolver.outputs.value}}
     steps:
-      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-      - uses: actions/checkout@v2
+      - name: Checkout code
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
 
-      # Runs a single command using the runners shell
-      - name: Run a one-line script
-        run: echo Hello, world!
+      - name: Get current branch
+        run: echo "::set-output name=branch::${GITHUB_REF#refs/heads/}"
+        id: currentBranch
 
-      # Runs a set of commands using the runners shell
-      - name: Run a multi-line script
+      - uses: haya14busa/action-cond@v1
+        id: version-resolver
+        with:
+          cond: ${{ github.event.inputs.pre-release-version == '' }}
+          if_true: ""
+          if_false: "0.${{ github.event.inputs.pre-release-version }}"
+
+      - name: Increase pom version
         run: |
-          echo Add other actions to build,
-          echo test, and deploy your project.
+          mvn versions:set -DgroupId=juanignacionogueira.tests -DartifactId=test-actions -DnewVersion=${{steps.version-resolver.outputs.value}} -DprocessDependencies=false -DprocessPlugins=false  -DprocessParent=false
+          git commit -a -m "Increase pom version ${{steps.version-resolver.outputs.value}}"
+          git push origin ${{steps.currentBranch.outputs.branch}}
+
+      - name: Create tag
+        run: |
+          git tag -a ${{steps.version-resolver.outputs.value}} -m "Nueva versión ${{steps.version-resolver.outputs.value}}"
+          git push && git push origin ${{steps.version-resolver.outputs.value}}
+
+      - name: Create pull request
+        uses: repo-sync/pull-request@v2
+        with:
+          github_token: ${{secrets.GITHUB_TOKEN}}
+
+      - name: update-pull-request
+        uses: kt3k/update-pr-description@v1.0.0
+        with:
+          pr_title: "TEST"
+          github_token: ${{secrets.GITHUB_TOKEN}}
+
+  update-status:
+    needs: [ prepare-build ]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - name: Set status
+        uses: Sibz/github-status-action@v1
+        with:
+          authToken: ${{secrets.GITHUB_TOKEN}}
+          context: 'jenkins'
+          state: 'success'
