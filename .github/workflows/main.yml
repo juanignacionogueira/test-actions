@@ -35,14 +35,16 @@ jobs:
           git config --global user.name "Juan"
           git config --global user.email "juanignacionogueira@gmail.com"
           git commit -a -m "Increase pom version ${{steps.version-resolver.outputs.value}}"
-          git push origin ${{steps.currentBranch.outputs.branch}}
+
+      - name: Push changes
+        uses: ad-m/github-push-action@master
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          branch: ${{ github.ref }}
 
       - name: Create tag
         run: |
           git tag -a ${{steps.version-resolver.outputs.value}} -m "Nueva versión ${{steps.version-resolver.outputs.value}}"
-          git push && git push origin ${{steps.version-resolver.outputs.value}}
-          git pull origin
-          git rev-parse HEAD
 
       - name: Create pull request
         uses: repo-sync/pull-request@v2
