@@ -32,6 +32,8 @@ jobs:
       - name: Increase pom version
         run: |
           mvn versions:set -DgroupId=juanignacionogueira.tests -DartifactId=test-actions -DnewVersion=${{steps.version-resolver.outputs.value}} -DprocessDependencies=false -DprocessPlugins=false  -DprocessParent=false
+          git config --global user.name "Juan"
+          git config --global user.email "juanignacionogueira@gmail.com"
           git commit -a -m "Increase pom version ${{steps.version-resolver.outputs.value}}"
           git push origin ${{steps.currentBranch.outputs.branch}}
 
