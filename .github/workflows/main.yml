@@ -41,6 +41,8 @@ jobs:
         run: |
           git tag -a ${{steps.version-resolver.outputs.value}} -m "Nueva versión ${{steps.version-resolver.outputs.value}}"
           git push && git push origin ${{steps.version-resolver.outputs.value}}
+          git pull origin
+          git rev-parse HEAD
 
       - name: Create pull request
         uses: repo-sync/pull-request@v2
