@@ -45,6 +45,7 @@ jobs:
       - name: Create pull request
         uses: repo-sync/pull-request@v2
         with:
+          destination_branch: "main"
           github_token: ${{secrets.GITHUB_TOKEN}}
 
       - name: update-pull-request
