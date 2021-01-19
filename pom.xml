@@ -6,7 +6,7 @@
 
     <groupId>juanignacionogueira.tests</groupId>
     <artifactId>test-actions</artifactId>
-    <version>0.0.1-beta4</version>
+    <version>0.0.1-beta5</version>
 
     <properties>
         <maven.compiler.source>11</maven.compiler.source>
