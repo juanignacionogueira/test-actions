@@ -40,7 +40,6 @@ jobs:
           git config --global user.name "Juan"
           git config --global user.email "juanignacionogueira@gmail.com"
           git commit -a -m "Increase pom version ${{steps.sem-version.outputs.next-version}}"
-          git push origin ${{steps.currentBranch.outputs.branch}}
 
       - name: Create tag
         run: |
