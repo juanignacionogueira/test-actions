@@ -36,7 +36,7 @@ jobs:
 
       - name: Increase pom version
         run: |
-          mvn versions:set -v -DgroupId=juanignacionogueira.tests -DartifactId=test-actions -DnewVersion=${{steps.sem-version.outputs.next-version}} -DprocessDependencies=false -DprocessPlugins=false  -DprocessParent=false
+          mvn versions:set  -DgroupId=juanignacionogueira.tests -DartifactId=test-actions -DnewVersion=${{steps.sem-version.outputs.next-version}} -DgenerateBackupPoms=false -DprocessDependencies=false -DprocessPlugins=false -DprocessParent=false
           git config --global user.name "Juan"
           git config --global user.email "juanignacionogueira@gmail.com"
           git commit -a -m "Increase pom version ${{steps.sem-version.outputs.next-version}}"
