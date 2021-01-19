@@ -27,9 +27,9 @@ jobs:
       - name: Validate
         shell: bash
         run: |
-          if [ "${{ github.event.inputs.bump-type }}" != "beta" ] && \\
-             [ "${{ github.event.inputs.bump-type }}" != "bug" ] && \\
-             [ "${{ github.event.inputs.bump-type }}" != "feature" ] && \\
+          if [ "${{ github.event.inputs.bump-type }}" != "beta" ] && \
+             [ "${{ github.event.inputs.bump-type }}" != "bug" ] && \
+             [ "${{ github.event.inputs.bump-type }}" != "feature" ] && \
              [ "${{ github.event.inputs.bump-type }}" != "major" ]
           then
             echo "Error on input bump-type, posible values are major, feature, bug and beta";
