@@ -30,6 +30,7 @@ jobs:
           if ["${{ github.event.inputs.bump-type }}" != "beta"] && ["${{ github.event.inputs.bump-type }}" != "bug"] && ["${{ github.event.inputs.bump-type }}" != "feature"] && ["${{ github.event.inputs.bump-type }}" != "major"]; then
             echo "Error on input bump-type, posible values are major, feature, bug and beta";
             exit 1;
+          fi
 
       - name: 'Get Previous tag'
         id: previoustag
