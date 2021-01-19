@@ -2,9 +2,10 @@ name: CI
 on:
   workflow_dispatch:
     inputs:
-      pre-release-version:
-        description: "Version para desarrollo. Ej: 1.2.0 => Se va a taggear con 0.1.2.0"
-        required: false
+        bump-type:
+          description: "Semantic versioning / Bump type [major, feature, bug, beta]"
+          required: true
+          default: 'beta'
 
 jobs:
   prepare-build:
@@ -12,6 +13,7 @@ jobs:
     continue-on-error: false
     outputs:
       version: ${{steps.version-resolver.outputs.value}}
+      tag-commit: ${{ steps.git-status.outputs.tag-commit }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
@@ -22,33 +24,64 @@ jobs:
         run: echo "::set-output name=branch::${GITHUB_REF#refs/heads/}"
         id: currentBranch
 
-      - uses: haya14busa/action-cond@v1
-        id: version-resolver
+      - name: Validate
+        shell: bash
+        run: |
+          if [ "${{ github.event.inputs.bump-type }}" != "beta" ] && \
+             [ "${{ github.event.inputs.bump-type }}" != "bug" ] && \
+             [ "${{ github.event.inputs.bump-type }}" != "feature" ] && \
+             [ "${{ github.event.inputs.bump-type }}" != "major" ]
+          then
+            echo "Error on input bump-type, posible values are major, feature, bug and beta";
+            exit 1;
+          fi
+
+      - name: 'Get Previous tag'
+        id: previoustag
+        uses: WyriHaximus/github-action-get-previous-tag@v1
+
+      - name: Bump release version
+        id: sem-version
+        uses: christian-draeger/increment-semantic-version@1.0.2
         with:
-          cond: ${{ github.event.inputs.pre-release-version == '' }}
-          if_true: ""
-          if_false: "0.${{ github.event.inputs.pre-release-version }}"
+          current-version: ${{ steps.previoustag.outputs.tag }}
+          version-fragment: ${{ github.event.inputs.bump-type }}
 
       - name: Increase pom version
         run: |
-          mvn versions:set -DgroupId=juanignacionogueira.tests -DartifactId=test-actions -DnewVersion=${{steps.version-resolver.outputs.value}} -DprocessDependencies=false -DprocessPlugins=false  -DprocessParent=false
-          git commit -a -m "Increase pom version ${{steps.version-resolver.outputs.value}}"
-          git push origin ${{steps.currentBranch.outputs.branch}}
+          mvn versions:set  -DgroupId=juanignacionogueira.tests -DartifactId=test-actions -DnewVersion=${{steps.sem-version.outputs.next-version}} -DgenerateBackupPoms=false -DprocessDependencies=false -DprocessPlugins=false -DprocessParent=false
+          git config --global user.name "Juan"
+          git config --global user.email "juanignacionogueira@gmail.com"
+          git commit -a -m "Increase pom version ${{steps.sem-version.outputs.next-version}}"
 
       - name: Create tag
         run: |
-          git tag -a ${{steps.version-resolver.outputs.value}} -m "Nueva versión ${{steps.version-resolver.outputs.value}}"
-          git push && git push origin ${{steps.version-resolver.outputs.value}}
+          git tag -a ${{steps.sem-version.outputs.next-version}} -m "Nueva versión ${{steps.sem-version.outputs.next-version}}"
+
+      - name: Push changes
+        uses: ad-m/github-push-action@master
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          branch: ${{ github.ref }}
+          tags: true
+
+      - name: Git Status
+        id: git-status
+        shell: bash
+        run: |
+          echo "::set-output name=tag-commit::$(git rev-parse HEAD)"
 
       - name: Create pull request
         uses: repo-sync/pull-request@v2
         with:
+          destination_branch: "main"
           github_token: ${{secrets.GITHUB_TOKEN}}
 
       - name: update-pull-request
         uses: kt3k/update-pr-description@v1.0.0
         with:
           pr_title: "TEST"
+          destination_branch: "main"
           github_token: ${{secrets.GITHUB_TOKEN}}
 
   update-status:
@@ -58,9 +91,11 @@ jobs:
       - uses: actions/checkout@v2
         with:
           fetch-depth: 0
+
       - name: Set status
         uses: Sibz/github-status-action@v1
         with:
           authToken: ${{secrets.GITHUB_TOKEN}}
-          context: 'jenkins'
+          context: 'some-check'
           state: 'success'
+          sha: ${{needs.prepare-build.outputs.tag-commit}}
