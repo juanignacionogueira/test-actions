@@ -24,16 +24,13 @@ jobs:
         run: echo "::set-output name=branch::${GITHUB_REF#refs/heads/}"
         id: currentBranch
 
-      - name: Validate input parameters
+      - name: Validate
         shell: bash
         run: |
-          valid=0
-          "${{ github.event.inputs.bump-type }}" != "beta" && valid=1
-          "${{ github.event.inputs.bump-type }}" != "major" && valid=1
-          "${{ github.event.inputs.bump-type }}" != "feature" && valid=1
-          "${{ github.event.inputs.bump-type }}" != "bug" && valid=1
-
-          if [ valid ]
+          if [ "${{ github.event.inputs.bump-type }}" != "beta" ] && \\
+             [ "${{ github.event.inputs.bump-type }}" != "bug" ] && \\
+             [ "${{ github.event.inputs.bump-type }}" != "feature" ] && \\
+             [ "${{ github.event.inputs.bump-type }}" != "major" ]
           then
             echo "Error on input bump-type, posible values are major, feature, bug and beta";
             exit 1;
