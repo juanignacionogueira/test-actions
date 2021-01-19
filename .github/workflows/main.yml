@@ -13,7 +13,7 @@ jobs:
     continue-on-error: false
     outputs:
       version: ${{steps.version-resolver.outputs.value}}
-      tag-commit: ${{ steps.vars.outputs.sha }}
+      tag-commit: ${{ steps.git-status.outputs.tag-commit }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
@@ -57,7 +57,7 @@ jobs:
         id: git-status
         shell: bash
         run: |
-          echo "::set-output name=sha::$(git rev-parse HEAD)"
+          echo "::set-output name=tag-commit::$(git rev-parse HEAD)"
 
       - name: Create pull request
         uses: repo-sync/pull-request@v2
